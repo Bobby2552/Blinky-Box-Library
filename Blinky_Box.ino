@@ -36,10 +36,14 @@ byte v[5] = {0x11, 0x11, 0x11, 0x0A, 0x04};
 byte y[5] = {0x11, 0x0A, 0x04, 0x04, 0x04};
 byte space[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
+byte current[5];
+
 void setup() {
     strip.begin();
     strip.show();
     strip.setBrightness(100);
+
+    current = a;
 }
 
 void loop() {

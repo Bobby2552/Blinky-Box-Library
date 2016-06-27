@@ -46,30 +46,53 @@ byte space[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 byte* alphabet[] = { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z };
 byte* text[] = { b, e, n, space, w, a, s, space, h, e, r, e };
 
+int spaceWidth = 4;
+int gapPerChar = 2;
+
+long timeTilOffset = 250;
+
+int offset = 5;
+int paddingAfterMessage = 5;
+
+int charWidth = 5 + gapPerChar;
+
+// These guys get assigned in `setup`, don't mess with these
+int textWidth = 0;
+int minOffset = 0;
+long startTime = 0;
+
 void setup() {
     Serial.begin(115200);
 
     strip.begin();
     strip.show();
+
+    // Calculate width of text
+    for (auto i = 0; i < COUNT(text) - 1; i++) {
+        if (text[i] == space) {
+            textWidth += spaceWidth;
+        } else {
+            textWidth += charWidth;
+        }
+    }
+    textWidth += 5; // The last character has no trailing whitespace and therefore is just 5 pixels wide
+
+    minOffset = -textWidth - paddingAfterMessage;
 }
 
-int curIndex = 0;
-long startTime = 0;
-long timePerChar = 200;
-
-int beginningOffset = 5;
-int offset = beginningOffset;
-int spacePerChar = 7 + (1 / timePerChar);
-
-int minOffset = -(5 * COUNT(text) + spacePerChar * (COUNT(text) - 1));
-
 void loop() {
-    int oldOffset = offset;
-    for (auto character : text) {
-        showCharRainbow(character);
-        offset += spacePerChar;
+    auto time = abs(sin(millis() * 0.001)) * 255;
+
+    auto curOffset = offset;
+    for (auto i = 0; i < COUNT(text); i++) {
+        if (text[i] == space) {
+            curOffset += spaceWidth - gapPerChar; // Undoes the gap added by the previous offset
+            continue;
+        } else {
+            showChar(text[i], hue(time), curOffset);
+            curOffset += charWidth;
+        }
     }
-    offset = oldOffset;
 
     strip.setBrightness(abs(sin(millis() * 0.001)) * 90 + 10);
     strip.show();
@@ -77,30 +100,29 @@ void loop() {
 
     wipe();
 
-    if (millis() - startTime > timePerChar) {
-        //++curIndex %= COUNT(text);
+    if (millis() - startTime > timeTilOffset) {
         offset--;
+        Serial.println(offset);
 
         if (offset < minOffset) {
-            offset = beginningOffset;
+            offset = 5;
         }
 
         startTime = millis();
     }
-
 }
 
-uint32_t Wheel(double WheelPos) {
-    WheelPos = 255 - WheelPos;
-    if(WheelPos < 85) {
-        return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+uint32_t hue(double wheelPos) {
+    wheelPos = 255 - wheelPos;
+    if(wheelPos < 85) {
+        return strip.Color(255 - wheelPos * 3, 0, wheelPos * 3);
     }
-    if(WheelPos < 170) {
-        WheelPos -= 85;
-        return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+    if(wheelPos < 170) {
+        wheelPos -= 85;
+        return strip.Color(0, wheelPos * 3, 255 - wheelPos * 3);
     }
-    WheelPos -= 170;
-    return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+    wheelPos -= 170;
+    return strip.Color(wheelPos * 3, 255 - wheelPos * 3, 0);
 }
 
 void wipe() {
@@ -118,23 +140,11 @@ boolean isPixelOn(byte character[], int r, int c) {
     return curRow & (0x10 >> c);
 }
 
-void showChar(byte character[], uint32_t color) {
-    for (int r = 0; r < 5; r++) {
-        for (int c = 0; c < 5; c++) {
-            if (isPixelOn(character, r, c + offset)) {
-                strip.setPixelColor(index[r][c + offset], color);
-            }
-        }
-    }
-}
-
-void showCharRainbow(byte character[]) {
+void showChar(byte character[], uint32_t color, int offset) {
     for (int r = 0; r < 5; r++) {
         for (int c = 0; c < 5; c++) {
             if (isPixelOn(character, r, c - offset)) {
-                auto time = abs(sin(millis() * 0.0001)) * 255;
-
-                strip.setPixelColor(index[r][c], Wheel(time));
+                strip.setPixelColor(index[r][c], color);
             }
         }
     }
@@ -144,7 +154,7 @@ void theaterChaseRainbow(uint8_t wait) {
     for (int j=0; j < 256; j++) {     // cycle all 256 colors in the wheel
         for (int q=0; q < 3; q++) {
             for (uint16_t i=0; i < strip.numPixels(); i=i+3) {
-                strip.setPixelColor(i+q, Wheel( (i+j) % 255));    //turn every third pixel on
+                strip.setPixelColor(i+q, hue( (i+j) % 255));    //turn every third pixel on
             }
             strip.show();
 

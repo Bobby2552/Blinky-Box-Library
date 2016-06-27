@@ -59,7 +59,7 @@ long startTime = 0;
 long timePerChar = 2000;
 
 void loop() {
-    show_char(text[curIndex]);
+    showCharRainbow(text[curIndex]);
     strip.show();
     delay(10);
 
@@ -90,13 +90,25 @@ void wipe() {
     }
 }
 
-void show_char(byte character[]) {
-    for (int r = 0; r < 5; r++) {
-        byte curRow = character[r];
+boolean isPixelOn(byte character[], int r, int c) {
+    byte curRow = character[r];
+    return curRow & (0x10 >> c);
+}
 
+void showChar(byte character[], uint32_t color) {
+    for (int r = 0; r < 5; r++) {
         for (int c = 0; c < 5; c++) {
-            boolean curPixel = curRow & (0x10 >> c);
-            if (curPixel) {
+            if (isPixelOn(character, r, c)) {
+                strip.setPixelColor(index[r][c], color);
+            }
+        }
+    }
+}
+
+void showCharRainbow(byte character[]) {
+    for (int r = 0; r < 5; r++) {
+        for (int c = 0; c < 5; c++) {
+            if (isPixelOn(character, r, c)) {
                 auto time = abs(sin(millis() * 0.0001)) * 255;
 
                 strip.setPixelColor(index[r][c], Wheel(time));

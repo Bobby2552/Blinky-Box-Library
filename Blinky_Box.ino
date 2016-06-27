@@ -47,9 +47,9 @@ byte* alphabet[] = { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t,
 byte* text[] = { b, e, n, space, w, a, s, space, h, e, r, e };
 
 int spaceWidth = 4;
-int gapPerChar = 2;
+int gapPerChar = 1;
 
-long timeTilOffset = 100;
+long timeTilOffset = 250;
 
 int offset = 5;
 int paddingAfterMessage = 5;
@@ -94,7 +94,7 @@ void loop() {
         }
     }
 
-    strip.setBrightness(abs(sin(millis() * 0.001)) * 80 + 10);
+    strip.setBrightness(abs(sin(millis() * 0.001)) * 10 + 5);
     strip.show();
     delay(10);
 

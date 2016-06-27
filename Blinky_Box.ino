@@ -54,7 +54,7 @@ long timeTilOffset = 250;
 int offset = 5;
 int paddingAfterMessage = 5;
 
-int charWidth = 5 + gapPerChar;
+int charWidth = 5 + gapPerChar; // Total width of character, including trailing gap
 
 // These guys get assigned in `setup`, don't mess with these
 int textWidth = 0;
@@ -68,8 +68,8 @@ void setup() {
     strip.show();
 
     // Calculate width of text
-    for (auto i = 0; i < COUNT(text) - 1; i++) {
-        if (text[i] == space) {
+    for (auto ch : text) {
+        if (ch == space) {
             textWidth += spaceWidth;
         } else {
             textWidth += charWidth;
@@ -77,7 +77,7 @@ void setup() {
     }
     textWidth += 5; // The last character has no trailing whitespace and therefore is just 5 pixels wide
 
-    minOffset = -textWidth - paddingAfterMessage;
+    minOffset = -textWidth - paddingAfterMessage; // Since we're scrolling to the left, we negate the width and additional padding
 }
 
 void loop() {
@@ -94,7 +94,7 @@ void loop() {
         }
     }
 
-    strip.setBrightness(abs(sin(millis() * 0.001)) * 90 + 10);
+    strip.setBrightness(abs(sin(millis() * 0.001)) * 80 + 10);
     strip.show();
     delay(10);
 
@@ -102,7 +102,6 @@ void loop() {
 
     if (millis() - startTime > timeTilOffset) {
         offset--;
-        Serial.println(offset);
 
         if (offset < minOffset) {
             offset = 5;
@@ -131,7 +130,7 @@ void wipe() {
     }
 }
 
-boolean isPixelOn(byte character[], int r, int c) {
+bool isPixelOn(byte character[], int r, int c) {
     if (r < 0 || c < 0 || r >= 5 || c >= 5) {
         return false;
     }

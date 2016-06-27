@@ -3,11 +3,11 @@
 int pin = 6;
 int numLEDs = 25;
 int index[5][5] = {
-    {0, 1, 2, 3, 4},
-    {9, 8, 7, 6, 5},
-    {10, 11, 12, 13, 14},
-    {19, 18, 17, 16, 15},
-    {20, 21, 22, 23, 24}
+    {0, 9, 10, 19, 20},
+    {1, 8, 11, 18, 21},
+    {2, 7, 12, 17, 22},
+    {3, 6, 13, 16, 23},
+    {4, 5, 14, 15, 24}
 };
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numLEDs, pin, NEO_RGB + NEO_KHZ800);
@@ -85,4 +85,8 @@ void theaterChaseRainbow(uint8_t wait) {
             }
         }
     }
+}
+
+void disp(byte letter[]) {
+  
 }

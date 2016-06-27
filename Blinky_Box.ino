@@ -27,7 +27,7 @@ byte i[5] = {0x1F, 0x04, 0x04, 0x04, 0x1F};
 byte j[5] = {0x1F, 0x04, 0x04, 0x14, 0x1C};
 byte k[5] = {0x11, 0x12, 0x1C, 0x12, 0x11};
 byte l[5] = {0x10, 0x10, 0x10, 0x10, 0x1F};
-byte m[5] = {0x1B, 0x15, 0x15, 0x11, 0x11};
+byte m[5] = {0x0A, 0x0A, 0x15, 0x15, 0x11};
 byte n[5] = {0x11, 0x19, 0x15, 0x13, 0x11};
 byte o[5] = {0x0E, 0x11, 0x11, 0x11, 0x0E};
 byte p[5] = {0x1F, 0x11, 0x1F, 0x10, 0x10};
@@ -51,24 +51,43 @@ void setup() {
 
     strip.begin();
     strip.show();
-    strip.setBrightness(100);
 }
 
 int curIndex = 0;
 long startTime = 0;
-long timePerChar = 2000;
+long timePerChar = 200;
+
+int beginningOffset = 5;
+int offset = beginningOffset;
+int spacePerChar = 7 + (1 / timePerChar);
+
+int minOffset = -(5 * COUNT(text) + spacePerChar * (COUNT(text) - 1));
 
 void loop() {
-    showCharRainbow(text[curIndex]);
+    int oldOffset = offset;
+    for (auto character : text) {
+        showCharRainbow(character);
+        offset += spacePerChar;
+    }
+    offset = oldOffset;
+
+    strip.setBrightness(abs(sin(millis() * 0.001)) * 90 + 10);
     strip.show();
     delay(10);
 
     wipe();
 
     if (millis() - startTime > timePerChar) {
-        ++curIndex %= COUNT(text);
+        //++curIndex %= COUNT(text);
+        offset--;
+
+        if (offset < minOffset) {
+            offset = beginningOffset;
+        }
+
         startTime = millis();
     }
+
 }
 
 uint32_t Wheel(double WheelPos) {
@@ -91,6 +110,10 @@ void wipe() {
 }
 
 boolean isPixelOn(byte character[], int r, int c) {
+    if (r < 0 || c < 0 || r >= 5 || c >= 5) {
+        return false;
+    }
+
     byte curRow = character[r];
     return curRow & (0x10 >> c);
 }
@@ -98,8 +121,8 @@ boolean isPixelOn(byte character[], int r, int c) {
 void showChar(byte character[], uint32_t color) {
     for (int r = 0; r < 5; r++) {
         for (int c = 0; c < 5; c++) {
-            if (isPixelOn(character, r, c)) {
-                strip.setPixelColor(index[r][c], color);
+            if (isPixelOn(character, r, c + offset)) {
+                strip.setPixelColor(index[r][c + offset], color);
             }
         }
     }
@@ -108,7 +131,7 @@ void showChar(byte character[], uint32_t color) {
 void showCharRainbow(byte character[]) {
     for (int r = 0; r < 5; r++) {
         for (int c = 0; c < 5; c++) {
-            if (isPixelOn(character, r, c)) {
+            if (isPixelOn(character, r, c - offset)) {
                 auto time = abs(sin(millis() * 0.0001)) * 255;
 
                 strip.setPixelColor(index[r][c], Wheel(time));

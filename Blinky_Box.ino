@@ -13,7 +13,7 @@ int index[5][5] = {
     {4, 5, 14, 15, 24}
 };
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(numLEDs, pin, NEO_RGB + NEO_KHZ800);
+Adafruit_NeoPixel strip(numLEDs, pin, NEO_RGB + NEO_KHZ800);
 
 byte a[5] = {0x04, 0x0A, 0x1F, 0x11, 0x11};
 byte b[5] = {0x1E, 0x11, 0x1E, 0x11, 0x1E};
@@ -49,15 +49,15 @@ byte* text[] = { b, e, n, space, w, a, s, space, h, e, r, e };
 int spaceWidth = 4;
 int gapPerChar = 2;
 
-long timeTilOffset = 250;
+long timeTilOffset = 100;
 
 int offset = 5;
 int paddingAfterMessage = 5;
 
+// These guys eitherget assigned in `setup` or are dependent on the previous variables, don't mess with these
 int charWidth = 5 + gapPerChar; // Total width of character, including trailing gap
-
-// These guys get assigned in `setup`, don't mess with these
 int textWidth = 0;
+
 int minOffset = 0;
 long startTime = 0;
 
@@ -68,9 +68,9 @@ void setup() {
     strip.show();
 
     // Calculate width of text
-    for (auto ch : text) {
-        if (ch == space) {
-            textWidth += spaceWidth;
+    for (auto i = 0; i < COUNT(text) - 1; i++) {
+        if (text[i] == space) {
+            textWidth += spaceWidth - gapPerChar; // If the subtraction by the `gapPerChar` is confusing, see the comment in `loop` where this operation occurs again
         } else {
             textWidth += charWidth;
         }
@@ -86,7 +86,7 @@ void loop() {
     auto curOffset = offset;
     for (auto i = 0; i < COUNT(text); i++) {
         if (text[i] == space) {
-            curOffset += spaceWidth - gapPerChar; // Undoes the gap added by the previous offset
+            curOffset += spaceWidth - gapPerChar; // We subtract by the `gapPerChar` to undo the gap added by the previous offset
             continue;
         } else {
             showChar(text[i], hue(time), curOffset);

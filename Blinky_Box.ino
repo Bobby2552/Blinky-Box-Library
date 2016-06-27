@@ -1,4 +1,7 @@
 #include <Adafruit_NeoPixel.h>
+#include <math.h>
+
+#define COUNT(arr) (sizeof(arr) / sizeof(*arr))
 
 int pin = 6;
 int numLEDs = 25;
@@ -14,10 +17,11 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(numLEDs, pin, NEO_RGB + NEO_KHZ800);
 
 byte a[5] = {0x04, 0x0A, 0x1F, 0x11, 0x11};
 byte b[5] = {0x1E, 0x11, 0x1E, 0x11, 0x1E};
-byte c[5] = {0x1E, 0x11, 0x10, 0x11, 0x1E};
+byte c[5] = {0x1F, 0x10, 0x10, 0x10, 0x1F};
 byte d[5] = {0x1E, 0x11, 0x11, 0x11, 0x1E};
 byte e[5] = {0x1F, 0x10, 0x1E, 0x10, 0x1F};
 byte f[5] = {0x1F, 0x10, 0x1F, 0x10, 0x10};
+byte g[5] = {0x1F, 0x10, 0x13, 0x11, 0x1F};
 byte h[5] = {0x11, 0x11, 0x1F, 0x11, 0x11};
 byte i[5] = {0x1F, 0x04, 0x04, 0x04, 0x1F};
 byte j[5] = {0x1F, 0x04, 0x04, 0x14, 0x1C};
@@ -33,18 +37,38 @@ byte s[5] = {0x0F, 0x10, 0x0E, 0x01, 0x1E};
 byte t[5] = {0x1F, 0x04, 0x04, 0x04, 0x04};
 byte u[5] = {0x11, 0x11, 0x11, 0x11, 0x0E};
 byte v[5] = {0x11, 0x11, 0x11, 0x0A, 0x04};
+byte w[5] = {0x11, 0x15, 0x15, 0x0A, 0x0A};
+byte x[5] = {0x11, 0x0A, 0x04, 0x0A, 0x11};
 byte y[5] = {0x11, 0x0A, 0x04, 0x04, 0x04};
+byte z[5] = {0x1F, 0x02, 0x04, 0x08, 0x01F};
 byte space[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
+byte* alphabet[] = { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z };
+byte* text[] = { b, e, n, space, w, a, s, space, h, e, r, e };
+
 void setup() {
+    Serial.begin(115200);
+
     strip.begin();
     strip.show();
     strip.setBrightness(100);
 }
 
+int curIndex = 0;
+long startTime = 0;
+long timePerChar = 2000;
+
 void loop() {
-    show_char(a);
+    show_char(text[curIndex]);
     strip.show();
+    delay(10);
+
+    wipe();
+
+    if (millis() - startTime > timePerChar) {
+        ++curIndex %= COUNT(text);
+        startTime = millis();
+    }
 }
 
 uint32_t Wheel(double WheelPos) {
@@ -71,9 +95,11 @@ void show_char(byte character[]) {
         byte curRow = character[r];
 
         for (int c = 0; c < 5; c++) {
-            boolean curPixel = curRow & (1 << c);
+            boolean curPixel = curRow & (0x10 >> c);
             if (curPixel) {
-                strip.setPixelColor(index[r][c], Wheel(0));
+                auto time = abs(sin(millis() * 0.0001)) * 255;
+
+                strip.setPixelColor(index[r][c], Wheel(time));
             }
         }
     }
@@ -94,8 +120,4 @@ void theaterChaseRainbow(uint8_t wait) {
             }
         }
     }
-}
-
-void disp(byte letter[]) {
-  
 }

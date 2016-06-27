@@ -12,7 +12,7 @@ int index[5][5] = {
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(numLEDs, pin, NEO_RGB + NEO_KHZ800);
 
-byte a[5] = {0x04, 0x0A, 0x11, 0x1F, 0x11};
+byte a[5] = {0x04, 0x0A, 0x1F, 0x11, 0x11};
 byte b[5] = {0x1E, 0x11, 0x1E, 0x11, 0x1E};
 byte c[5] = {0x1E, 0x11, 0x10, 0x11, 0x1E};
 byte d[5] = {0x1E, 0x11, 0x11, 0x11, 0x1E};
@@ -36,18 +36,14 @@ byte v[5] = {0x11, 0x11, 0x11, 0x0A, 0x04};
 byte y[5] = {0x11, 0x0A, 0x04, 0x04, 0x04};
 byte space[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
-byte current[5];
-
 void setup() {
     strip.begin();
     strip.show();
     strip.setBrightness(100);
-
-    current = a;
 }
 
 void loop() {
-    strip.setPixelColor(index[2][2], Wheel(0));
+    show_char(a);
     strip.show();
 }
 
@@ -67,6 +63,19 @@ uint32_t Wheel(double WheelPos) {
 void wipe() {
     for (int i = 0; i < numLEDs; i++) {
         strip.setPixelColor(i, strip.Color(0, 0, 0));
+    }
+}
+
+void show_char(byte character[]) {
+    for (int r = 0; r < 5; r++) {
+        byte curRow = character[r];
+
+        for (int c = 0; c < 5; c++) {
+            boolean curPixel = curRow & (1 << c);
+            if (curPixel) {
+                strip.setPixelColor(index[r][c], Wheel(0));
+            }
+        }
     }
 }
 

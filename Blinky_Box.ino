@@ -14,6 +14,7 @@ int index[5][5] = {
 };
 
 Adafruit_NeoPixel strip(numLEDs, pin, NEO_RGB + NEO_KHZ800);
+typedef uint32_t Color(int r, int c);
 
 byte a[5] = {0x04, 0x0A, 0x1F, 0x11, 0x11};
 byte b[5] = {0x1E, 0x11, 0x1E, 0x11, 0x1E};
@@ -41,6 +42,7 @@ byte w[5] = {0x11, 0x15, 0x15, 0x0A, 0x0A};
 byte x[5] = {0x11, 0x0A, 0x04, 0x0A, 0x11};
 byte y[5] = {0x11, 0x0A, 0x04, 0x04, 0x04};
 byte z[5] = {0x1F, 0x02, 0x04, 0x08, 0x01F};
+
 byte space[5] = {0x00, 0x00, 0x00, 0x00, 0x00};
 
 byte* alphabet[] = { a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z };
@@ -49,7 +51,7 @@ byte* text[] = { b, e, n, space, w, a, s, space, h, e, r, e };
 int spaceWidth = 4;
 int gapPerChar = 1;
 
-long timeTilOffset = 250;
+long timeTilOffset = 200;
 
 int offset = 5;
 int paddingAfterMessage = 5;
@@ -66,6 +68,7 @@ void setup() {
 
     strip.begin();
     strip.show();
+    strip.setBrightness(10);
 
     // Calculate width of text
     for (auto i = 0; i < COUNT(text) - 1; i++) {
@@ -80,16 +83,15 @@ void setup() {
     minOffset = -textWidth - paddingAfterMessage; // Since we're scrolling to the left, we negate the width and additional padding
 }
 
-void loop() {
-    auto time = abs(sin(millis() * 0.001)) * 255;
-
+void loopText() {
     auto curOffset = offset;
+
     for (auto i = 0; i < COUNT(text); i++) {
         if (text[i] == space) {
-            curOffset += spaceWidth - gapPerChar; // We subtract by the `gapPerChar` to undo the gap added by the previous offset
+            curOffset += spaceWidth - gapPerChar; // We subtract by the `gapPerChar` to undo the gap added by the previous iteration
             continue;
         } else {
-            showChar(text[i], hue(time), curOffset);
+            showCharRainbow(text[i], curOffset, i);
             curOffset += charWidth;
         }
     }
@@ -111,6 +113,25 @@ void loop() {
     }
 }
 
+void rotate(double* vec, double ang) {
+    vec[0] = vec[0] * cos(ang) - vec[1] * sin(ang);
+    vec[1] = vec[0] * sin(ang) - vec[1] * cos(ang);
+}
+
+void loopColor() {
+    for (auto r = 0; r < 5; r++) {
+        for (auto c = 0; c < 5; c++) {
+            strip.setPixelColor(index[r][c], hue(rainbowHue(r, c)));
+        }
+    }
+
+    strip.show();
+}
+
+void loop() {
+    loopText();
+}
+
 uint32_t hue(double wheelPos) {
     wheelPos = 255 - wheelPos;
     if(wheelPos < 85) {
@@ -130,6 +151,17 @@ void wipe() {
     }
 }
 
+uint32_t rainbowHue(int r, int c) {
+    double vec[] = {
+        (c / 4.0) * 2 - 1,
+        (r / 4.0) * 2 - 1
+    };
+    rotate(vec, millis() * 0.001);
+
+    auto ang = (atan2(vec[1], vec[0]) + PI) / (2 * PI);
+    return ang * 255;
+}
+
 bool isPixelOn(byte character[], int r, int c) {
     if (r < 0 || c < 0 || r >= 5 || c >= 5) {
         return false;
@@ -144,6 +176,17 @@ void showChar(byte character[], uint32_t color, int offset) {
         for (int c = 0; c < 5; c++) {
             if (isPixelOn(character, r, c - offset)) {
                 strip.setPixelColor(index[r][c], color);
+            }
+        }
+    }
+}
+
+void showCharRainbow(byte character[], int offset, int colorOffset) {
+    for (int r = 0; r < 5; r++) {
+        for (int c = 0; c < 5; c++) {
+            if (isPixelOn(character, r, c - offset)) {
+                auto ang = rainbowHue(r, c) * 0.25 + 20 * colorOffset;
+                strip.setPixelColor(index[r][c], hue(fmod(ang, 255)));
             }
         }
     }
